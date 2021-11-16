@@ -61,14 +61,15 @@
 		
 		move_uploaded_file($_FILES['img']['tmp_name'], "$name.$ext");  //원본 파일 가져오기
 		
+
 		//!-- 이미지 사이즈 변경 처리
 		$sizes = [36, 48, 72, 96, 144, 192, 512];
 		$files = array();
 		foreach($sizes as $size)
 		{
 			$ext_lower = strtolower($ext);
+			png_delete_trans("$name.$ext");  //알파 채널 제거 (gms2 아이콘 세팅 규격)
 			resize_image("$name.$ext","$size.$ext_lower",$size,$size);
-			imagealphablending("$size.$ext_lower",false);  //알파 채널 제거 (gms2 아이콘 세팅 규격)
 			$files[] = "$size.$ext_lower";
 			//array_push($files,"$size.$ext_lower");
 		}
@@ -117,6 +118,33 @@
 		  imagegif($dst, $newfile);
 	}
 	//--!
+	
+
+	//!-- 이미지 업로드 시 PNG (알파채널 o)를 PNG (알파채널 x)로 바꿔주는 함수
+	function png_delete_trans($filePath)
+	{
+		// Get the original image.
+		$src = imagecreatefrompng($filePath);
+
+		// Get the width and height.
+		$width = imagesx($src);
+		$height = imagesy($src);
+
+		// Create a white background, the same size as the original.
+		$bg = imagecreatetruecolor($width, $height);
+		$white = imagecolorallocate($bg, 255, 255, 255);
+		imagefill($bg, 0, 0, $white);
+
+		// Merge the two images.
+		imagecopyresampled(
+			$bg, $src,
+			0, 0, 0, 0,
+			$width, $height,
+			$width, $height);
+
+		// Save the finished image.
+		imagepng($bg, $filePath, 0);
+	}
 	
   ?>
 
