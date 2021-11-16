@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+    <meta content="utf-8" http-equiv="encoding">
+    <title>Drag And Drop</title>
+</head>
+
+<body>
+    <div id="drop-area" class="drop-area">
+        <p>Drag file here!</p>
+    </div>
+    <div id="gallery"></div>
+
+</body>
+<script type="text/javascript">
+    let dropArea = document.getElementById('drop-area')
+
+    dropArea.addEventListener('dragenter', highlight, false)
+    dropArea.addEventListener('dragover', highlight, false)
+    dropArea.addEventListener('dragleave', unHighlight, false)
+    dropArea.addEventListener('drop', unHighlight, false)
+
+    window.addEventListener('dragover', stop, false)
+    window.addEventListener('drop', stop, false)
+
+    dropArea.addEventListener('drop', onDrop, false)
+
+    function highlight(e) {
+        dropArea.classList.add('highlight')
+
+        e.preventDefault()
+        e.stopPropagation()
+    }
+    function unHighlight(e) {
+        dropArea.classList.remove('highlight')
+
+        e.preventDefault()
+        e.stopPropagation()
+    }
+
+    function stop(e) {
+        e.preventDefault()
+        e.stopPropagation()
+    }
+    function onDrop(e) {
+        let dt = e.dataTransfer
+        let files = dt.files
+
+        previewFile(files)
+    }
+
+    function previewFile(files) {
+        [...files].forEach((file) => {
+            if (file.type.includes('image')) {
+                let reader = new FileReader()
+                reader.readAsDataURL(file)
+                reader.onloadend = function () {
+                    let img = document.createElement('img')
+                    img.src = reader.result
+                    document.getElementById('gallery').appendChild(img)
+                }
+            }
+        })
+    }
+</script>
+
+</html>

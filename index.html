@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  
+  <!-- Info meta tags -->
+  <meta name="title" content="Android Icon Generator for GMS" />
+  <meta name="description" content="Physia Web Services - Utility" />
+  
+  <!-- OG meta tags -->
+  <meta property="og:url"                content="https://physia.kr/ws/utility" />
+  <meta property="og:type"               content="website" />
+  <meta property="og:title"              content="Android Icon Generator for GMS" />
+  <meta property="og:description"        content="Physia Web Services - Utility" />
+  <meta property="og:image"              content="../../thumbnail.png" />
+
+  <title>Android Icon Generator for GMS</title>
+
+  <!-- Custom fonts for this template-->
+  <link href="vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
+  <link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet">
+
+  <!-- Custom styles for this template-->
+  <link href="css/sb-admin-2.min.css" rel="stylesheet">
+
+</head>
+
+<body class="bg-gradient-secondary">
+
+  <?php
+	
+    //!-- 이미지 업로드 처리
+	if (isset($_FILES['img']))
+	{
+		$allowed_ext = array(
+			'jpg', 'JPG',
+			'jpeg', 'JPEG',
+			'png', 'PNG', 
+			'gif', 'GIF'
+		);
+		$error = $_FILES['img']['error'];
+		$name = $_FILES['img']['name'];
+		$tmp = explode('.', $name);
+		$ext = array_pop($tmp);
+		if( !in_array($ext, $allowed_ext) ) {
+			echo "허용되지 않는 확장자입니다.";
+			unset($_FILES['img']);
+			echo "
+				<script>
+					setTimeout(function(){
+						location.href = '';
+					},1000);
+				</script>
+			";
+			exit;
+		}
+		
+		move_uploaded_file($_FILES['img']['tmp_name'], "$name.$ext");  //원본 파일 가져오기
+		
+		//!-- 이미지 사이즈 변경 처리
+		$sizes = [36, 48, 72, 96, 144, 192, 512];
+		$files = array();
+		foreach($sizes as $size)
+		{
+			$ext_lower = strtolower($ext);
+			resize_image("$name.$ext","$size.$ext_lower",$size,$size);
+			$files[] = "$size.$ext_lower";
+			//array_push($files,"$size.$ext_lower");
+		}
+		//--!
+		
+		
+		//!-- 이미지 압축 처리 
+		
+		$zip_path="./"; //압축할 파일들의 경로
+		$zip_name = "icon.zip"; //다운로드되는 파일명
+		
+		unlink("$zip_name");  //기존 zip 파일 삭제하기
+		
+		$zip = new ZipArchive();  //압축 파일 생성
+		if ($zip->open($zip_name, ZipArchive::CREATE) !== true){
+		  exit("cannot open [".$zip_name."]");
+		}
+		foreach($files as $file){
+		  $zip->addFile($zip_path.$file, $file);
+		}
+		$zip->close();
+		//--!
+		
+		echo "<script> window.open('$zip_name', '_blank'); </script>";  //zip 다운로드
+		
+		unlink("$name.$ext");  //원본 이미지 삭제하기
+	}
+	//--!
+	
+    //!-- 이미지 업로드 시 사이즈 변경 함수
+	function resize_image($file, $newfile, $w, $h) {
+	   list($width, $height) = getimagesize($file);
+	   if(strpos(strtolower($file), ".jpg"))
+		  $src = imagecreatefromjpeg($file);
+	   else if(strpos(strtolower($file), ".png"))
+		  $src = imagecreatefrompng($file);
+	   else if(strpos(strtolower($file), ".gif"))
+		  $src = imagecreatefromgif($file);
+	   $dst = imagecreatetruecolor($w, $h);
+	   imagecopyresampled($dst, $src, 0, 0, 0, 0, $w, $h, $width, $height);
+	   if(strpos(strtolower($newfile), ".jpg"))
+		  imagejpeg($dst, $newfile);
+	   else if(strpos(strtolower($newfile), ".png"))
+		  imagepng($dst, $newfile);
+	   else if(strpos(strtolower($newfile), ".gif"))
+		  imagegif($dst, $newfile);
+	}
+	//--!
+	
+  ?>
+
+
+  <div class="container">
+
+    <!-- Outer Row -->
+    <div class="row justify-content-center">
+
+      <div class="col-12">
+
+        <div class="card o-hidden border-0 shadow-lg my-5">
+          <div class="card-body p-0">
+            <!-- Nested Row within Card Body -->
+            <div class="row">
+              <div class="col-lg-12">
+                <div class="p-5">
+                  <div class="text-center">
+                    <h1 class="h4 text-gray-900 mb-4">Android Icon Generator for GMS</h1>
+                  </div>
+                  <div class="text-center p-2">
+				    <script> 
+					function setThumbnail(event) { 
+						var reader = new FileReader(); 
+						reader.onload = function(event) { 
+							document.querySelector("#thumbnail_image").src = event.target.result; 
+						}; 
+						reader.readAsDataURL(event.target.files[0]); 
+					} 
+					</script>
+				    <img src='icon-example.png' width='256' height='256' class='img-responsive' id='thumbnail_image'>
+                  </div>
+				  <form enctype='multipart/form-data' method="post">
+					<label for="img">이미지 업로드 (권장 사이즈 : 512px)</label>
+					<input type="file" class="form-control" id="img" name="img" onchange='setThumbnail(event);'>
+					<input type="submit" class="form-control btn btn-dark btn-icon-split" style="margin-top:16px;" value="Generate">
+				  </form>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+  
+
+  <!-- Bootstrap core JavaScript-->
+  <script src="vendor/jquery/jquery.min.js"></script>
+  <script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+
+  <!-- Core plugin JavaScript-->
+  <script src="vendor/jquery-easing/jquery.easing.min.js"></script>
+
+  <!-- Custom scripts for all pages-->
+  <script src="js/sb-admin-2.min.js"></script>
+
+</body>
+
+</html>
