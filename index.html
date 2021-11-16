@@ -68,6 +68,7 @@
 		{
 			$ext_lower = strtolower($ext);
 			resize_image("$name.$ext","$size.$ext_lower",$size,$size);
+			imagealphablending("$size.$ext_lower",false);  //알파 채널 제거 (gms2 아이콘 세팅 규격)
 			$files[] = "$size.$ext_lower";
 			//array_push($files,"$size.$ext_lower");
 		}
